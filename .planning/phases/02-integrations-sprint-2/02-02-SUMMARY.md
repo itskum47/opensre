@@ -1,3 +1,26 @@
+---
+phase: 02-integrations-sprint-2
+plan: 02
+subsystem: integrations
+tags: [github, pipeline]
+requires: [02-01]
+provides:
+  - GitHub plugin
+  - Wired collect method in InvestigationPipeline
+affects: []
+tech-stack:
+  added: []
+  patterns: [pipeline-collection-pattern]
+key-files:
+  created: [backend/app/providers/github.py]
+  modified: [backend/app/domain/incidents/pipeline.py]
+key-decisions:
+  - "Query all integrations asynchronously during pipeline collection"
+requirements-completed: [INTG-04]
+duration: 15min
+completed: 2026-06-07
+---
+
 # Phase 2: Integrations (Sprint 2) - Wave 2 Summary
 
 ## Tasks Completed

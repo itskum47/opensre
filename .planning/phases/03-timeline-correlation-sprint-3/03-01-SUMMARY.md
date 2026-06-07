@@ -1,3 +1,26 @@
+---
+phase: 03-timeline-correlation-sprint-3
+plan: 01
+subsystem: timeline-correlation
+tags: [timeline, correlation]
+requires: []
+provides:
+  - TimelineBuilder implementation
+  - CorrelationEngine implementation
+affects: []
+tech-stack:
+  added: []
+  patterns: [timeline-pattern, correlation-pattern]
+key-files:
+  created: [backend/app/domain/incidents/timeline.py]
+  modified: [backend/app/domain/incidents/pipeline.py]
+key-decisions:
+  - "Use a 5-minute sliding window for temporal event correlation"
+requirements-completed: [TIME-01, CORR-01]
+duration: 15min
+completed: 2026-06-07
+---
+
 # Phase 3 Plan 01: Timeline & Correlation - Summary
 
 ## Tasks Completed
