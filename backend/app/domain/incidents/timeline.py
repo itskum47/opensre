@@ -207,6 +207,21 @@ class CorrelationEngine:
                         parts = v.split("-")
                         if len(parts) > 1:
                             keys.add("-".join(parts[:-1]))
+
+        # For git commits, extract potential resource keys from the message or description
+        if event.get("event_type") == "git_commit":
+            import re
+            text = (event.get("description", "") + " " + metadata.get("message", "")).lower()
+            words = re.findall(r"[a-zA-Z0-9\-]+", text)
+            for w in words:
+                if len(w) >= 2:
+                    keys.add(w)
+                    parts = w.split("-")
+                    if len(parts) > 1:
+                        keys.add("-".join(parts[:-1]))
+                        if len(parts) > 2:
+                            keys.add("-".join(parts[:-2]))
+                            
         return keys
 
     def correlate_events(self, timeline_events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

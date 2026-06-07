@@ -1,6 +1,6 @@
 {
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-  "python.interpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.defaultInterpreterPath": "/Users/kumarmangalam/Desktop/Projects/.venv/bin/python",
+  "python.interpreterPath": "/Users/kumarmangalam/Desktop/Projects/.venv/bin/python",
   "python.terminal.activateEnvInTriggeredTerminal": true,
   "python.analysis.extraPaths": [
     "${workspaceFolder}/backend"
