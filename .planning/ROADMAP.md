@@ -6,7 +6,7 @@ This roadmap defines the implementation path for OpenSRE, a production-grade AI 
 
 ## Phases
 
-- [ ] **Phase 1: Foundation (Sprint 1)** - Create the backend core, LLMProvider router, Worker queue, Snapshots, and Docker test setup.
+- [x] **Phase 1: Foundation (Sprint 1)** - Create the backend core, LLMProvider router, Worker queue, Snapshots, and Docker test setup.
 - [ ] **Phase 2: Integrations (Sprint 2)** - Implement Prometheus, Loki, Kubernetes, and GitHub connectors.
 - [ ] **Phase 3: Timeline & Correlation (Sprint 3)** - Implement TimelineBuilder and correlation engine.
 - [ ] **Phase 4: Graph Engine & Root Cause Ranking (Sprint 4)** - Model system topology, rank root causes, and run evaluation benchmarks.
@@ -79,7 +79,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation (Sprint 1) | 0/3 | Not started | - |
+| 1. Foundation (Sprint 1) | 3/3 | Complete | 2026-06-07 |
 | 2. Integrations (Sprint 2) | 0/2 | Not started | - |
 | 3. Timeline & Correlation (Sprint 3) | 0/1 | Not started | - |
 | 4. Graph Engine & Root Cause Ranking (Sprint 4) | 0/3 | Not started | - |
