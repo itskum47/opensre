@@ -7,9 +7,9 @@ This roadmap defines the implementation path for OpenSRE, a production-grade AI 
 ## Phases
 
 - [x] **Phase 1: Foundation (Sprint 1)** - Create the backend core, LLMProvider router, Worker queue, Snapshots, and Docker test setup.
-- [ ] **Phase 2: Integrations (Sprint 2)** - Implement Prometheus, Loki, Kubernetes, and GitHub connectors.
-- [ ] **Phase 3: Timeline & Correlation (Sprint 3)** - Implement TimelineBuilder and correlation engine.
-- [ ] **Phase 4: Graph Engine & Root Cause Ranking (Sprint 4)** - Model system topology, rank root causes, and run evaluation benchmarks.
+- [x] **Phase 2: Integrations (Sprint 2)** - Implement Prometheus, Loki, Kubernetes, and GitHub connectors.
+- [x] **Phase 3: Timeline & Correlation (Sprint 3)** - Implement TimelineBuilder and correlation engine.
+- [x] **Phase 4: Graph Engine & Root Cause Ranking (Sprint 4)** - Model system topology, rank root causes, and run evaluation benchmarks.
 
 ## Phase Details
 
@@ -26,9 +26,9 @@ This roadmap defines the implementation path for OpenSRE, a production-grade AI 
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Setup monorepo, config, and `LLMProvider` router.
-- [ ] 01-02: Develop `InvestigationPipeline`, Event Store, Audit Trail, and async worker queue.
-- [ ] 01-03: Create snapshot writer, `IncidentReportV1` schemas, Docker setup, CI/CD pipeline configs, and basic pytest suite.
+- [x] 01-01: Setup monorepo, config, and `LLMProvider` router.
+- [x] 01-02: Develop `InvestigationPipeline`, Event Store, Audit Trail, and async worker queue.
+- [x] 01-03: Create snapshot writer, `IncidentReportV1` schemas, Docker setup, CI/CD pipeline configs, and basic pytest suite.
 
 ### Phase 2: Integrations (Sprint 2)
 **Goal**: Build plugins to fetch data from Kubernetes, Prometheus, Loki, and GitHub.
@@ -41,8 +41,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Implement Kubernetes, Prometheus, and Loki integrations.
-- [ ] 02-02: Implement GitHub connector integration.
+- [x] 02-01: Implement Kubernetes, Prometheus, and Loki integrations.
+- [x] 02-02: Implement GitHub connector integration.
 
 ### Phase 3: Timeline & Correlation (Sprint 3)
 **Goal**: Normalize raw collected events into a single, correlated chronological timeline.
@@ -54,7 +54,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 03-01: Build `TimelineBuilder` and the Evidence Correlation engine.
+- [x] 03-01: Build `TimelineBuilder` and the Evidence Correlation engine.
 
 ### Phase 4: Graph Engine & Root Cause Ranking (Sprint 4)
 **Goal**: Construct service topology using NetworkX, rank hypotheses with explainable factors, build CLI/SDK, and run benchmarks.
@@ -68,9 +68,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Implement `GraphProvider` (NetworkX) and the `RootCauseRanker`.
-- [ ] 04-02: Develop CLI commands and the plugin SDK interfaces.
-- [ ] 04-03: Run synthetic incident testing and verify baseline benchmark coverage.
+- [x] 04-01: Implement `GraphProvider` (NetworkX) and the `RootCauseRanker`.
+- [x] 04-02: Develop CLI commands and the plugin SDK interfaces.
+- [x] 04-03: Run synthetic incident testing and verify baseline benchmark coverage.
 
 ## Progress
 
@@ -80,6 +80,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation (Sprint 1) | 3/3 | Complete | 2026-06-07 |
-| 2. Integrations (Sprint 2) | 0/2 | Not started | - |
-| 3. Timeline & Correlation (Sprint 3) | 0/1 | Not started | - |
-| 4. Graph Engine & Root Cause Ranking (Sprint 4) | 0/3 | Not started | - |
+| 2. Integrations (Sprint 2) | 2/2 | Complete | 2026-06-07 |
+| 3. Timeline & Correlation (Sprint 3) | 1/1 | Complete | 2026-06-07 |
+| 4. Graph Engine & Root Cause Ranking (Sprint 4) | 3/3 | Complete | 2026-06-07 |
