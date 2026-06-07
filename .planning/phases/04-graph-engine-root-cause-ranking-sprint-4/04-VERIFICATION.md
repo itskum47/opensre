@@ -29,11 +29,16 @@ All 21 unit, integration, and benchmark tests are passing.
 
 ### Verified Requirements
 
-| Requirement ID / Area | Description | Verification Method | Status |
-|----------------------|-------------|---------------------|--------|
-| **GRAPH-01** | Service Topology Graph representation using NetworkX | Asserted in `test_graph_provider_mapping` | Passed |
-| **RANK-01** | Multi-Factor Root Cause Hypothesis Ranking | Asserted in `test_root_cause_ranker_scoring` | Passed |
-| **CLI-01** | OpenSRE CLI with investigate and explain commands | Asserted in `test_cli_commands` | Passed |
-| **BENCH-01** | Synthetic Incident Benchmarks (Redis saturation and Database outage) | Asserted in `test_benchmark_redis_saturation` and `test_benchmark_database_outage` | Passed |
+| Requirement ID | Description | Verification Method | Status |
+|----------------|-------------|---------------------|--------|
+| **GRP-01** | `GraphProvider` abstraction | Unit test check for interface | Passed |
+| **GRP-02** | `NetworkXProvider` implementation | Asserted in `test_graph_provider_mapping` | Passed |
+| **RNK-01** | `RootCauseRanker` implementation | Asserted in `test_root_cause_ranker_scoring` | Passed |
+| **RNK-02** | Explainable confidence scores | Verified score metrics and explanations in ranker tests | Passed |
+| **TEST-01** | Automated benchmark scenarios | Verified in `test_benchmark_redis_saturation` and `test_benchmark_database_outage` | Passed |
+| **TEST-02** | Benchmark quality metrics tracking | Verified report.json fields and CLI subcommand verification | Passed |
+| **CLI-01** | `opensre investigate` subcommand | Asserted in `test_cli_commands` | Passed |
+| **CLI-02** | `opensre explain` subcommand | Asserted in `test_cli_commands` | Passed |
+| **SDK-01** | Plugin interfaces definitions | Verified in integrations test suite | Passed |
 
 All requirements for Phase 4 are fully verified.
