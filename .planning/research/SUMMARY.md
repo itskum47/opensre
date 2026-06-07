@@ -64,7 +64,7 @@ The project will follow a 4-phase (Sprint-based) structure to build the core fou
 
 ### Phase 1: Foundation (Sprint 1)
 **Rationale:** Standardize routers, event schemas, workers, and testing infrastructure first to establish a solid platform core.
-**Delivers:** LLMProvider, Event Store, Feature Flags, Audit Trail, InvestigationPipeline registry, Snapshots, IncidentReportV1 schema, Redis/Celery queue setup, Docker config, and pytest framework.
+**Delivers:** LLMProvider, Event Store, Feature Flags, Audit Trail, InvestigationPipeline registry, Snapshots, IncidentReportV1 schema, Redis/Celery queue setup, Docker config, GitLab CI/GitHub Actions workflows, and pytest framework.
 **Addresses:** Basic pipeline execution, multi-LLM routing, and async task processing.
 **Avoids:** Blocking API Handlers.
 

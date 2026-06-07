@@ -14,20 +14,21 @@ This roadmap defines the implementation path for OpenSRE, a production-grade AI 
 ## Phase Details
 
 ### Phase 1: Foundation (Sprint 1)
-**Goal**: Establish the Core API, LLMProvider abstraction, Event Store, Feature Flags, Audit Trail, async Workers, and Docker environment.
+**Goal**: Establish the Core API, LLMProvider abstraction, Event Store, Feature Flags, Audit Trail, async Workers, and Docker/CI-CD environment.
 **Depends on**: Nothing
-**Requirements**: ROUT-01, ROUT-02, ROUT-03, STOR-01, STOR-02, FLAG-01, AUDT-01, PIPE-01, PIPE-02, SNAP-01, SNAP-02, REPT-01, WORK-01, WORK-02, DOCK-01
+**Requirements**: ROUT-01, ROUT-02, ROUT-03, STOR-01, STOR-02, FLAG-01, AUDT-01, PIPE-01, PIPE-02, SNAP-01, SNAP-02, REPT-01, WORK-01, WORK-02, DOCK-01, DOCK-02
 **Success Criteria** (what must be TRUE):
   1. API endpoint `POST /investigations` returns a `job_id` asynchronously under 50ms without blocking.
   2. Celery/RQ workers execute `InvestigationPipeline` stages sequentially, updating states from QUEUED to COMPLETED in the registry.
   3. Investigation snapshots and audit trail logs are persisted immutably in SQLite/PostgreSQL and the local event store.
   4. Multi-LLM calls route successfully through `LLMProvider` adapters without direct imports of SDKs outside `providers/`.
+  5. CI/CD configuration (GitHub Actions or GitLab CI) successfully executes testing, linting, and style formatting checks.
 **Plans**: 3 plans
 
 Plans:
 - [ ] 01-01: Setup monorepo, config, and `LLMProvider` router.
 - [ ] 01-02: Develop `InvestigationPipeline`, Event Store, Audit Trail, and async worker queue.
-- [ ] 01-03: Create snapshot writer, `IncidentReportV1` schemas, Docker setup, and basic pytest suite.
+- [ ] 01-03: Create snapshot writer, `IncidentReportV1` schemas, Docker setup, CI/CD pipeline configs, and basic pytest suite.
 
 ### Phase 2: Integrations (Sprint 2)
 **Goal**: Build plugins to fetch data from Kubernetes, Prometheus, Loki, and GitHub.

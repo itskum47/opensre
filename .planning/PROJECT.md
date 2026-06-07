@@ -57,6 +57,7 @@ OpenSRE is designed as a pluggable, evidence-driven monorepo containing:
 - **Non-blocking API**: Investigation execution must be entirely asynchronous and queued via Celery/RQ + Redis.
 - **Monorepo Structure**: All components (backend, frontend, CLI, SDK) must live in a unified monorepo.
 - **Build order**: Must strictly follow the Sprint rules (Sprint 1: Router, Event Store, Feature Flags, Audit Trail, Pipeline, Snapshot, Report schema, Worker Queue, Docker, Tests).
+- **CI/CD Execution**: Automated testing, linting, and verification pipelines must run on GitHub Actions or GitLab CI.
 
 ## Key Decisions
 
@@ -66,6 +67,7 @@ OpenSRE is designed as a pluggable, evidence-driven monorepo containing:
 | NetworkX for initial Graph Engine | Lightweight and fast memory-based graph analysis before moving to Neo4j. | — Pending |
 | Redis + Celery/RQ for Worker Queue | Standard Python asynchronous task queue pattern for scalable, non-blocking jobs. | — Pending |
 | FastAPI for Backend | Modern, fast web framework with strong support for asynchronous routing and typing. | — Pending |
+| GitHub Actions / GitLab CI for CI/CD | Standardized open-source automation platforms to run linting and tests. | — Pending |
 
 ---
 *Last updated: 2026-06-07 after initialization*

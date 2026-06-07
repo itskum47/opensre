@@ -22,6 +22,7 @@
 - [ ] **WORK-01**: Investigation pipeline execution must run asynchronously, enqueued as tasks in a background queue (Celery/RQ + Redis).
 - [ ] **WORK-02**: The API endpoint `POST /investigations` must return a `job_id` immediately without blocking.
 - [ ] **DOCK-01**: The system must provide a Docker deployment configuration to run API, workers, Redis, and integrations locally.
+- [ ] **DOCK-02**: The system must include CI/CD pipelines configured for GitHub Actions (`.github/workflows/`) or GitLab CI/CD (`.gitlab-ci.yml`) to run tests and linters automatically.
 
 ### Integrations (Sprint 2)
 
@@ -85,6 +86,7 @@
 | WORK-01 | Phase 1 | Pending |
 | WORK-02 | Phase 1 | Pending |
 | DOCK-01 | Phase 1 | Pending |
+| DOCK-02 | Phase 1 | Pending |
 | INTG-01 | Phase 2 | Pending |
 | INTG-02 | Phase 2 | Pending |
 | INTG-03 | Phase 2 | Pending |
@@ -102,10 +104,10 @@
 | SDK-01 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 30 total
-- Mapped to phases: 30
+- v1 requirements: 31 total
+- Mapped to phases: 31
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-06-07*
-*Last updated: 2026-06-07 after initial definition*
+*Last updated: 2026-06-07 after GitLab/GitHub Actions requirement added*
