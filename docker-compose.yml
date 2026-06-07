@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///./opensre.db
+    depends_on:
+      - redis
+
+  celery_worker:
+    build: .
+    command: celery -A backend.app.workers.tasks.celery_app worker --loglevel=info
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:///./opensre.db
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7.2-alpine
+    ports:
+      - "6379:6379"

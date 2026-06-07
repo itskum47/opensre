@@ -1,0 +1,31 @@
+stages:
+  - lint
+  - test
+
+variables:
+  REDIS_URL: "redis://redis:6379/0"
+  DATABASE_URL: "sqlite:///./opensre_test.db"
+  PYTHONPATH: "."
+
+default:
+  image: python:3.12-slim
+
+cache:
+  paths:
+    - .pip-cache/
+
+before_script:
+  - pip install --cache-dir .pip-cache/ fastapi uvicorn celery redis sqlalchemy pydantic-settings pydantic networkx pytest pytest-asyncio pytest-cov ruff
+
+lint-code:
+  stage: lint
+  script:
+    - ruff check .
+
+run-tests:
+  stage: test
+  services:
+    - name: redis:7-alpine
+      alias: redis
+  script:
+    - pytest

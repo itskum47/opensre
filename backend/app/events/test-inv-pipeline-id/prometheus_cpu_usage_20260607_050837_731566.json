@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-06-07T05:08:37.731600+00:00",
+  "source_type": "prometheus",
+  "source_id": "cpu_usage",
+  "payload": {
+    "status": "success",
+    "data": {
+      "resultType": "matrix",
+      "result": [
+        {
+          "metric": {
+            "pod": "auth-service-xyz",
+            "__name__": "container_cpu_usage_seconds_total"
+          },
+          "values": [
+            [
+              1780789117,
+              "0.15"
+            ],
+            [
+              1780789132,
+              "0.18"
+            ],
+            [
+              1780789147,
+              "0.22"
+            ]
+          ]
+        },
+        {
+          "metric": {
+            "pod": "db-service-abc",
+            "__name__": "container_cpu_usage_seconds_total"
+          },
+          "values": [
+            [
+              1780789117,
+              "0.45"
+            ],
+            [
+              1780789132,
+              "0.48"
+            ],
+            [
+              1780789147,
+              "0.52"
+            ]
+          ]
+        }
+      ]
+    }
+  }
+}
