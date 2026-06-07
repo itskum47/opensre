@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-06-07T05:13:26.411244+00:00",
+  "source_type": "kubernetes",
+  "source_id": "cluster_resources",
+  "payload": {
+    "pods": [
+      {
+        "name": "auth-service-xyz",
+        "namespace": "default",
+        "status": "Running",
+        "ip": "10.244.0.12"
+      },
+      {
+        "name": "db-service-abc",
+        "namespace": "default",
+        "status": "Running",
+        "ip": "10.244.0.15"
+      }
+    ],
+    "deployments": [
+      {
+        "name": "auth-service",
+        "namespace": "default",
+        "replicas": 1,
+        "available_replicas": 1
+      },
+      {
+        "name": "db-service",
+        "namespace": "default",
+        "replicas": 1,
+        "available_replicas": 1
+      }
+    ],
+    "services": [
+      {
+        "name": "auth-service",
+        "namespace": "default",
+        "cluster_ip": "10.96.0.12"
+      },
+      {
+        "name": "db-service",
+        "namespace": "default",
+        "cluster_ip": "10.96.0.15"
+      }
+    ],
+    "events": [
+      {
+        "type": "Warning",
+        "reason": "Unhealthy",
+        "message": "Readiness probe failed: HTTP probe failed with statuscode: 500",
+        "object": "Pod/auth-service-xyz",
+        "timestamp": "2026-06-07T10:00:00Z"
+      }
+    ]
+  }
+}

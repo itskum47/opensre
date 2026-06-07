@@ -1,3 +1,5 @@
+import os
+import json
 import logging
 from datetime import datetime, timezone
 from sqlalchemy.orm import Session
@@ -8,6 +10,8 @@ from backend.app.providers.prometheus import PrometheusDataSource
 from backend.app.providers.loki import LokiDataSource
 from backend.app.providers.kubernetes import KubernetesDataSource
 from backend.app.providers.github import GitHubDataSource
+from backend.app.domain.incidents.timeline import TimelineBuilder, CorrelationEngine
+
 
 
 logger = logging.getLogger(__name__)
@@ -175,15 +179,49 @@ class InvestigationPipeline:
 
     async def normalize(self, investigation_id: str):
         logger.info(f"Pipeline {investigation_id}: normalize stage running")
-        pass
+        store = EventStore()
+        builder = TimelineBuilder(store)
+        raw_timeline = builder.build_raw_timeline(investigation_id)
+        
+        timeline_path = os.path.join(store.base_dir, investigation_id, "timeline.json")
+        with open(timeline_path, "w", encoding="utf-8") as f:
+            json.dump(raw_timeline, f, indent=2)
+        logger.info(f"Pipeline {investigation_id}: normalized timeline persisted with {len(raw_timeline)} events")
 
     async def correlate(self, investigation_id: str):
         logger.info(f"Pipeline {investigation_id}: correlate stage running")
-        pass
+        store = EventStore()
+        timeline_path = os.path.join(store.base_dir, investigation_id, "timeline.json")
+        try:
+            with open(timeline_path, "r", encoding="utf-8") as f:
+                raw_timeline = json.load(f)
+        except Exception:
+            builder = TimelineBuilder(store)
+            raw_timeline = builder.build_raw_timeline(investigation_id)
+            
+        engine = CorrelationEngine()
+        groups = engine.correlate_events(raw_timeline)
+        
+        groups_path = os.path.join(store.base_dir, investigation_id, "correlated_groups.json")
+        with open(groups_path, "w", encoding="utf-8") as f:
+            json.dump(groups, f, indent=2)
+        logger.info(f"Pipeline {investigation_id}: correlation completed with {len(groups)} groups")
 
     async def timeline(self, investigation_id: str):
         logger.info(f"Pipeline {investigation_id}: timeline stage running")
-        pass
+        store = EventStore()
+        timeline_path = os.path.join(store.base_dir, investigation_id, "timeline.json")
+        try:
+            with open(timeline_path, "r", encoding="utf-8") as f:
+                raw_timeline = json.load(f)
+            logger.info(f"Pipeline {investigation_id} Timeline Summary:")
+            for ev in raw_timeline[:10]:
+                logger.info(f"  [{ev['timestamp']}] {ev['source_type']} | {ev['event_type']} - {ev['description']}")
+            if len(raw_timeline) > 10:
+                logger.info(f"  ... and {len(raw_timeline) - 10} more events")
+        except Exception as e:
+            logger.error(f"Failed to generate timeline log: {e}")
+
 
     async def graph(self, investigation_id: str):
         logger.info(f"Pipeline {investigation_id}: graph stage running")
