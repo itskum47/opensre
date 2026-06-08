@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "password"
 
+    # Slack Configurations
+    SLACK_BOT_TOKEN: str = "mock-token"
+    SLACK_CHANNEL: str = "general"
+    SLACK_SIGNING_SECRET: str = "mock-secret"
+
     # Feature Flags
     ENABLE_MEMORY: bool = False
     ENABLE_REMEDIATION: bool = False
