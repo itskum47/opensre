@@ -2,7 +2,6 @@ import logging
 from typing import Dict, Any
 from backend.app.providers.notifications.slack import SlackProvider
 from backend.app.providers.notifications.pagerduty import PagerDutyProvider
-from backend.app.config.settings import settings
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 import os
 import shutil
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.app.database import Base
@@ -94,8 +94,8 @@ async def test_prometheus_loki_collection(db_session):
     # Setup mocks
     with patch("httpx.AsyncClient.get") as mock_get, \
          patch("backend.app.providers.kubernetes.K8S_AVAILABLE", True), \
-         patch("kubernetes.config.load_incluster_config") as mock_incluster, \
-         patch("kubernetes.config.load_kube_config") as mock_kubeconfig, \
+         patch("kubernetes.config.load_incluster_config"), \
+         patch("kubernetes.config.load_kube_config"), \
          patch("kubernetes.client.CoreV1Api") as mock_core_api, \
          patch("kubernetes.client.AppsV1Api") as mock_apps_api:
 

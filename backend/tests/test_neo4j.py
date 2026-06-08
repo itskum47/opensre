@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock, patch
 from backend.app.providers.graph.neo4j import Neo4jConnector
 

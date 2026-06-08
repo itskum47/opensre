@@ -1,5 +1,4 @@
 import os
-import json
 import pytest
 import shutil
 from backend.app.domain.incidents.schemas import IncidentReportV1, ConfidenceFactors, EvidenceSource

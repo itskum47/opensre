@@ -3,7 +3,6 @@ import json
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.app.database import Base
-from backend.app.domain.audit.models import AuditRecord
 from backend.app.domain.incidents.models import HistoricalIncident
 from backend.app.domain.incidents.memory import (
     IncidentMemoryEngine,

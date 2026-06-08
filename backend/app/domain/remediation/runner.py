@@ -1,5 +1,4 @@
 import logging
-import json
 from datetime import datetime, timezone, timedelta
 from sqlalchemy.orm import Session
 from backend.app.domain.incidents.models import RemediationAction, RemediationStatus

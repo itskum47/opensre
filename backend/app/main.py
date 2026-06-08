@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from backend.app.database import engine, Base, get_db
 from backend.app.domain.incidents.models import Investigation, InvestigationStatus, RemediationAction, RemediationStatus
@@ -17,7 +18,6 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="OpenSRE API", version="1.0")
 
-from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

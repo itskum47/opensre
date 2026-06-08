@@ -1,4 +1,3 @@
-import pytest
 from datetime import datetime, timezone
 from backend.app.domain.incidents.graph import GraphProvider
 from backend.app.domain.incidents.ranker import RootCauseRanker

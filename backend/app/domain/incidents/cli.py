@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import os
 import json
-from datetime import datetime, timezone
 from backend.app.database import SessionLocal
 from backend.app.domain.incidents.models import Investigation, InvestigationStatus
 from backend.app.domain.incidents.pipeline import InvestigationPipeline
@@ -59,7 +58,7 @@ async def run_investigate(investigation_id: str):
             for idx, hyp in enumerate(hypotheses[:3]):
                 print(f"  #{idx+1} Confidence: {hyp['confidence_score'] * 100:.1f}% | Keys: {', '.join(hyp['keys'])}")
                 print(f"     Explanation: {hyp['explanation']}")
-                print(f"     Evidence Snippets:")
+                print("     Evidence Snippets:")
                 for snippet in hyp['evidence']:
                     print(f"       - {snippet}")
         else:

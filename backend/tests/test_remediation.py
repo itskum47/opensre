@@ -12,7 +12,7 @@ import backend.app.database
 import backend.app.workers.tasks
 import backend.app.main
 
-from backend.app.domain.incidents.models import RemediationAction, RemediationStatus, Investigation, InvestigationStatus
+from backend.app.domain.incidents.models import RemediationAction, RemediationStatus
 from backend.app.domain.audit.models import AuditRecord
 from backend.app.domain.remediation.runner import RemediationRunner
 from backend.app.workers.tasks import run_remediation_task

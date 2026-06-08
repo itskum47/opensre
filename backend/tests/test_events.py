@@ -1,5 +1,4 @@
 import os
-import json
 import pytest
 import shutil
 from backend.app.events.store import EventStore

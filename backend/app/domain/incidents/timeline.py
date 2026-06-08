@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-import json
 import logging
 from typing import Dict, Any, List
 from backend.app.events.store import EventStore

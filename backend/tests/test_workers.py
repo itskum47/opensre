@@ -1,5 +1,4 @@
-import pytest
-from backend.app.workers.tasks import celery_app, run_investigation_task
+from backend.app.workers.tasks import celery_app
 
 def test_celery_config():
     assert celery_app.conf.task_serializer == "json"

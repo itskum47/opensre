@@ -2,7 +2,6 @@ import os
 import json
 import shutil
 import pytest
-from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.app.database import Base

@@ -1,13 +1,9 @@
-import pytest
-import hmac
-import hashlib
 import json
 import time
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 from backend.app.main import app
 from backend.app.providers.notifications.slack import SlackProvider
-from backend.app.config.settings import settings
 
 client = TestClient(app)
 

@@ -21,7 +21,7 @@ class MockLLMProvider(LLMProvider):
         self.calls.append({"prompt": prompt, "response_model": response_model, "kwargs": kwargs})
         # Check if there is a preset response for this model
         for key, resp in self.preset_responses.items():
-            if response_model == type(resp):
+            if response_model is type(resp):
                 return resp
         # Otherwise instantiate a default model instance if possible
         try:
@@ -30,15 +30,15 @@ class MockLLMProvider(LLMProvider):
             # If default instantiation fails, construct with dummy data based on schema fields
             fields = {}
             for name, field in response_model.model_fields.items():
-                if field.annotation == str:
+                if field.annotation is str:
                     fields[name] = f"mock_{name}"
-                elif field.annotation == int or field.annotation == float:
+                elif field.annotation is int or field.annotation is float:
                     fields[name] = 0
-                elif field.annotation == bool:
+                elif field.annotation is bool:
                     fields[name] = False
-                elif getattr(field.annotation, "__origin__", None) == list:
+                elif getattr(field.annotation, "__origin__", None) is list:
                     fields[name] = []
-                elif getattr(field.annotation, "__origin__", None) == dict:
+                elif getattr(field.annotation, "__origin__", None) is dict:
                     fields[name] = {}
                 else:
                     fields[name] = None
@@ -72,7 +72,7 @@ class GeminiProvider(LLMProvider):
     async def generate_structured(self, prompt: str, response_model: Type[BaseModel], **kwargs: Any) -> BaseModel:
         try:
             from google import genai
-            client = genai.Client(api_key=kwargs.get("api_key", "mock"))
+            genai.Client(api_key=kwargs.get("api_key", "mock"))
             if kwargs.get("api_key") in ["mock-key", "mock", None]:
                 raise ConnectionError("Mock connection error for Gemini")
             raise NotImplementedError("Real Gemini provider requires live credentials")

@@ -1,8 +1,6 @@
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from backend.app.providers.notifications.pagerduty import PagerDutyProvider
 from backend.app.providers.notifications.router import NotificationRouter
-from backend.app.config.settings import settings
 
 def test_pagerduty_provider_mock():
     provider = PagerDutyProvider()
