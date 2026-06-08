@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     SLACK_CHANNEL: str = "general"
     SLACK_SIGNING_SECRET: str = "mock-secret"
 
+    # PagerDuty Configurations
+    PAGERDUTY_API_KEY: str = "mock-key"
+    PAGERDUTY_ROUTING_KEY: str = "mock-key"
+
     # Feature Flags
     ENABLE_MEMORY: bool = False
     ENABLE_REMEDIATION: bool = False
