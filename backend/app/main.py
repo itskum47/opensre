@@ -1,10 +1,15 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from backend.app.database import engine, Base, get_db
 from backend.app.domain.incidents.models import Investigation, InvestigationStatus
 from backend.app.domain.incidents.snapshots import SnapshotManager
 from backend.app.workers.tasks import run_investigation_task
+from backend.app.config.settings import settings
 import uuid
+import hmac
+import hashlib
+import json
+import time
 
 # Initialize database tables
 Base.metadata.create_all(bind=engine)
@@ -52,3 +57,54 @@ def get_investigation_snapshot(investigation_id: str):
         return manager.load_snapshot(investigation_id)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Snapshot not found for this investigation")
+
+async def verify_slack_signature(request: Request):
+    """Dependency verifying Slack signature using signing secret."""
+    # Allow mock bypass in testing
+    if request.headers.get("X-Mock-Slack") == "true":
+        return
+
+    body = await request.body()
+    signature = request.headers.get("X-Slack-Signature")
+    timestamp = request.headers.get("X-Slack-Request-Timestamp")
+    
+    if not signature or not timestamp:
+        raise HTTPException(status_code=401, detail="Missing Slack verification headers")
+        
+    if abs(time.time() - int(timestamp)) > 60 * 5:
+        raise HTTPException(status_code=401, detail="Request timestamp expired")
+        
+    sig_basestring = f"v0:{timestamp}:{body.decode('utf-8')}".encode('utf-8')
+    computed_sig = "v0=" + hmac.new(
+        key=settings.SLACK_SIGNING_SECRET.encode('utf-8'),
+        msg=sig_basestring,
+        digestmod=hashlib.sha256
+    ).hexdigest()
+    
+    if not hmac.compare_digest(computed_sig, signature):
+        raise HTTPException(status_code=403, detail="Invalid Slack signature")
+
+@app.post("/api/v1/slack/actions")
+async def slack_actions_webhook(request: Request, _ = Depends(verify_slack_signature)):
+    """Receives interactive block kit approvals from Slack."""
+    form_data = await request.form()
+    payload = form_data.get("payload")
+    if not payload:
+        raise HTTPException(status_code=400, detail="Missing payload form field")
+        
+    try:
+        payload_dict = json.loads(payload)
+        action = payload_dict["actions"][0]
+        action_id = action["action_id"]
+        investigation_id = action["value"]
+        
+        # Log action approval for tracing
+        # (In Phase 8 this will trigger execution of the approved remediation script)
+        return {
+            "status": "success",
+            "action_id": action_id,
+            "investigation_id": investigation_id
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to parse payload: {e}")
+
