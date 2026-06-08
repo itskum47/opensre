@@ -96,7 +96,7 @@
 | 2. System Integrations | v1.0 | 2/2 | Complete | 2026-06-07 |
 | 3. Timeline & Correlation | v1.0 | 1/1 | Complete | 2026-06-07 |
 | 4. Graph Engine & Root Cause Ranking | v1.0 | 3/3 | Complete | 2026-06-07 |
-| 5. Neo4j Storage Layer | v1.1 | 0/2 | Not started | - |
+| 5. Neo4j Storage Layer | 2/2 | Complete    | 2026-06-08 | - |
 | 6. Slack & PagerDuty Notifications | v1.1 | 0/2 | Not started | - |
 | 7. Historical Incident Memory | v1.1 | 0/2 | Not started | - |
 | 8. Human-in-the-Loop Remediation | v1.1 | 0/2 | Not started | - |
