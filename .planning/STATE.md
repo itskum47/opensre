@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-stopped_at: All phases completed, verified, and ready for milestone transition.
-last_updated: "2026-06-07T11:18:12.044Z"
-last_activity: 2026-06-07 — Completed Phase 4 (Graph Engine & Root Cause Ranking) with all 21 tests passing.
+milestone: v1.1
+milestone_name: Security & Advanced Features
+status: defining_requirements
+stopped_at: —
+last_updated: "2026-06-07T19:06:52+05:30"
+last_activity: 2026-06-07 — Milestone v1.1 started
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -21,36 +21,32 @@ progress:
 See: .planning/PROJECT.md (updated 2026-06-07)
 
 **Core value:** Evidence-based incident reasoning engine that strictly enforces the Evidence → Correlation → Timeline → Graph → Hypothesis → Ranking → Explanation order.
-**Current focus:** Milestone Completion
+**Current focus:** Defining requirements
 
 ## Current Position
 
-Phase: 4 of 4 (Graph Engine & Root Cause Ranking)
-Plan: 3 of 3 in current phase
-Status: Completed
-Last activity: 2026-06-07 — Completed Phase 4 (Graph Engine & Root Cause Ranking) with all 21 tests passing.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-06-07 — Milestone v1.1 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 15 min
-- Total execution time: 2.25 hours
+- Total plans completed: 0
+- Average duration: —
+- Total execution time: 0 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 1. Foundation | 3/3 | 0.75h | 15 min |
-| 2. Integrations | 2/2 | 0.50h | 15 min |
-| 3. Timeline & Correlation | 1/1 | 0.25h | 15 min |
-| 4. Graph Engine & Root Cause Ranking | 3/3 | 0.75h | 15 min |
 
 **Recent Trend:**
-- Last 5 plans: [15, 15, 15, 15, 15]
-- Trend: Stable
+- Last 5 plans: []
+- Trend: —
 
 *Updated after each plan completion*
 

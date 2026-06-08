@@ -8,6 +8,18 @@ OpenSRE is a production-grade open-source platform designed to investigate produ
 
 An evidence-based incident reasoning engine that strictly enforces the invariant: Evidence → Correlation → Timeline → Graph → Hypothesis → Ranking → Explanation. It eliminates guesses by ensuring all findings are backed by verifiable evidence.
 
+## Current Milestone: v1.1 Security & Advanced Features
+
+**Goal:** Implement notification systems, Neo4j persistent graph storage, historical memory RCA learning, human-in-the-loop remediation, and a web-based dashboard UI.
+
+**Target features:**
+- Slack notifications and interactive blocks
+- PagerDuty alerting and incident status sync
+- Neo4j persistent graph storage and visualization
+- Historical incident memory-based RCA learning
+- Human-in-the-loop remediation orchestration
+- Web-based dashboard UI
+
 ## Requirements
 
 ### Validated
@@ -74,4 +86,4 @@ OpenSRE is designed as a pluggable, evidence-driven monorepo containing:
 | Git Commit Key Correlation | Parse commit messages for service names to align change history with corresponding pods. | ✓ Good |
 
 ---
-*Last updated: 2026-06-07 after v1.0 MVP milestone completion*
+*Last updated: 2026-06-07 after v1.1 milestone started*
