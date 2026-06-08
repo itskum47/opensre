@@ -237,7 +237,7 @@ class InvestigationPipeline:
         except Exception:
             groups = []
 
-        provider = GraphProvider()
+        provider = GraphProvider(investigation_id=investigation_id)
         all_keys = set()
         for g in groups:
             all_keys.update(g.get("keys", []))
@@ -283,7 +283,7 @@ class InvestigationPipeline:
                 topology_data = json.load(f)
             graph_provider = GraphProvider.from_dict(topology_data)
         except Exception:
-            graph_provider = GraphProvider()
+            graph_provider = GraphProvider(investigation_id=investigation_id)
 
         ranker = RootCauseRanker(graph_provider)
         candidates = ranker.rank_hypotheses(started_at, groups)

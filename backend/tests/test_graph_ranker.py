@@ -80,3 +80,23 @@ def test_root_cause_ranker_scoring():
     # Check that change_history is 1.0 for Group 1 and 0.0 for Group 2
     assert candidates[0]["metrics"]["change_history"] == 1.0
     assert candidates[1]["metrics"]["change_history"] == 0.0
+
+def test_shared_dependencies():
+    # Setup service topology
+    # api-gateway -> auth-service -> db-service
+    # payment-service -> db-service
+    provider = GraphProvider()
+    provider.add_node("api-gateway")
+    provider.add_node("auth-service")
+    provider.add_node("payment-service")
+    provider.add_node("db-service")
+    
+    provider.add_edge("api-gateway", "auth-service")
+    provider.add_edge("auth-service", "db-service")
+    provider.add_edge("payment-service", "db-service")
+
+    # Find shared dependencies between api-gateway and payment-service (should be db-service)
+    shared = provider.get_shared_dependencies(["api-gateway", "payment-service"], max_hops=3)
+    assert "db-service" in shared
+    assert "auth-service" not in shared  # not dependent by payment-service
+    assert "api-gateway" not in shared  # should exclude alerts themselves
