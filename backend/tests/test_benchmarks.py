@@ -23,7 +23,7 @@ def db_session():
 @pytest.mark.asyncio
 async def test_benchmark_redis_saturation(db_session):
     investigation_id = "bench-redis-saturation"
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(timezone.utc).replace(microsecond=0)
     ts_unix = int(started_at.timestamp())
     ts_ns = ts_unix * 1000000000
     ts_iso = started_at.isoformat().replace("+00:00", "Z")
@@ -162,7 +162,7 @@ async def test_benchmark_redis_saturation(db_session):
 @pytest.mark.asyncio
 async def test_benchmark_database_outage(db_session):
     investigation_id = "bench-db-outage"
-    started_at = datetime.now(timezone.utc)
+    started_at = datetime.now(timezone.utc).replace(microsecond=0)
     ts_unix = int(started_at.timestamp())
     ts_ns = ts_unix * 1000000000
     ts_iso = started_at.isoformat().replace("+00:00", "Z")

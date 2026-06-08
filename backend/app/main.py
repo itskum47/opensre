@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from backend.app.database import engine, Base, get_db
-from backend.app.domain.incidents.models import Investigation, InvestigationStatus
+from backend.app.domain.incidents.models import Investigation, InvestigationStatus, RemediationAction, RemediationStatus
 from backend.app.domain.incidents.snapshots import SnapshotManager
+
 from backend.app.workers.tasks import run_investigation_task
 from backend.app.config.settings import settings
 import uuid
@@ -15,6 +16,16 @@ import time
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="OpenSRE API", version="1.0")
+
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.post("/investigations", status_code=status.HTTP_201_CREATED)
 def trigger_investigation(db: Session = Depends(get_db)):
@@ -32,6 +43,23 @@ def trigger_investigation(db: Session = Depends(get_db)):
     
     return {"job_id": investigation_id}
 
+@app.get("/investigations")
+def list_investigations(db: Session = Depends(get_db)):
+    """Lists all investigations registered in the database, ordered by start time descending."""
+    investigations = db.query(Investigation).order_by(Investigation.started_at.desc()).all()
+    return [
+        {
+            "id": inv.id,
+            "status": inv.status.value,
+            "started_at": inv.started_at.isoformat(),
+            "completed_at": inv.completed_at.isoformat() if inv.completed_at else None,
+            "duration": inv.duration,
+            "pipeline_version": inv.pipeline_version,
+            "report_id": inv.report_id
+        }
+        for inv in investigations
+    ]
+
 @app.get("/investigations/{investigation_id}")
 def get_investigation_status(investigation_id: str, db: Session = Depends(get_db)):
     """Returns the current registry status of an investigation."""
@@ -48,6 +76,7 @@ def get_investigation_status(investigation_id: str, db: Session = Depends(get_db
         "pipeline_version": investigation.pipeline_version,
         "report_id": investigation.report_id
     }
+
 
 @app.get("/investigations/{investigation_id}/snapshot")
 def get_investigation_snapshot(investigation_id: str):
@@ -85,7 +114,11 @@ async def verify_slack_signature(request: Request):
         raise HTTPException(status_code=403, detail="Invalid Slack signature")
 
 @app.post("/api/v1/slack/actions")
-async def slack_actions_webhook(request: Request, _ = Depends(verify_slack_signature)):
+async def slack_actions_webhook(
+    request: Request, 
+    db: Session = Depends(get_db),
+    _ = Depends(verify_slack_signature)
+):
     """Receives interactive block kit approvals from Slack."""
     form_data = await request.form()
     payload = form_data.get("payload")
@@ -98,13 +131,89 @@ async def slack_actions_webhook(request: Request, _ = Depends(verify_slack_signa
         action_id = action["action_id"]
         investigation_id = action["value"]
         
-        # Log action approval for tracing
-        # (In Phase 8 this will trigger execution of the approved remediation script)
+        # Find the pending remediation action for this investigation
+        remediation = db.query(RemediationAction).filter(
+            RemediationAction.investigation_id == investigation_id,
+            RemediationAction.status == RemediationStatus.PENDING_APPROVAL
+        ).first()
+        
+        if not remediation:
+            return {
+                "response_type": "ephemeral",
+                "text": "❌ No pending remediation action found for this investigation."
+            }
+            
+        if action_id == "approve_remediation":
+            remediation.status = RemediationStatus.APPROVED
+            db.commit()
+            
+            # Enqueue Celery task
+            from backend.app.workers.tasks import run_remediation_task
+            run_remediation_task.delay(remediation.id)
+            
+            message_text = f"✅ *Approved:* Remediation action `{remediation.action_name}` on `{remediation.target_resource}` has been approved and is running."
+        elif action_id == "reject_remediation":
+            remediation.status = RemediationStatus.REJECTED
+            db.commit()
+            
+            message_text = f"❌ *Rejected:* Remediation action `{remediation.action_name}` on `{remediation.target_resource}` has been rejected."
+        else:
+            return {"status": "ignored"}
+            
         return {
-            "status": "success",
-            "action_id": action_id,
-            "investigation_id": investigation_id
+            "response_type": "in_channel",
+            "text": message_text
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to parse payload: {e}")
+        raise HTTPException(status_code=400, detail=f"Failed to process Slack action: {e}")
+
+@app.get("/api/v1/remediations/{remediation_id}")
+def get_remediation_status(remediation_id: str, db: Session = Depends(get_db)):
+    remediation = db.query(RemediationAction).filter(RemediationAction.id == remediation_id).first()
+    if not remediation:
+        raise HTTPException(status_code=404, detail="Remediation action not found")
+    
+    return {
+        "id": remediation.id,
+        "investigation_id": remediation.investigation_id,
+        "status": remediation.status.value,
+        "action_name": remediation.action_name,
+        "target_resource": remediation.target_resource,
+        "params": json.loads(remediation.params) if remediation.params else None,
+        "created_at": remediation.created_at.isoformat(),
+        "updated_at": remediation.updated_at.isoformat()
+    }
+
+@app.post("/api/v1/remediations/{remediation_id}/approve")
+def approve_remediation(remediation_id: str, db: Session = Depends(get_db)):
+    remediation = db.query(RemediationAction).filter(RemediationAction.id == remediation_id).first()
+    if not remediation:
+        raise HTTPException(status_code=404, detail="Remediation action not found")
+    
+    if remediation.status != RemediationStatus.PENDING_APPROVAL:
+        raise HTTPException(status_code=400, detail=f"Remediation is not in PENDING_APPROVAL state (current status: {remediation.status.value})")
+        
+    remediation.status = RemediationStatus.APPROVED
+    db.commit()
+    
+    # Trigger Celery task
+    from backend.app.workers.tasks import run_remediation_task
+    run_remediation_task.delay(remediation.id)
+    
+    return {"status": "approved", "remediation_id": remediation_id}
+
+@app.post("/api/v1/remediations/{remediation_id}/reject")
+def reject_remediation(remediation_id: str, db: Session = Depends(get_db)):
+    remediation = db.query(RemediationAction).filter(RemediationAction.id == remediation_id).first()
+    if not remediation:
+        raise HTTPException(status_code=404, detail="Remediation action not found")
+        
+    if remediation.status != RemediationStatus.PENDING_APPROVAL:
+        raise HTTPException(status_code=400, detail=f"Remediation is not in PENDING_APPROVAL state (current status: {remediation.status.value})")
+        
+    remediation.status = RemediationStatus.REJECTED
+    db.commit()
+    
+    return {"status": "rejected", "remediation_id": remediation_id}
+
 

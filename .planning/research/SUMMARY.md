@@ -1,122 +1,138 @@
 # Project Research Summary
 
 **Project:** OpenSRE
-**Domain:** AI-driven SRE & Incident Investigation Platform
+**Domain:** Incident Investigation & Reason Engine (SRE)
 **Researched:** 2026-06-07
 **Confidence:** HIGH
 
 ## Executive Summary
 
-OpenSRE is designed to fill a critical gap in automated incident management. Traditional systems either alert humans (without context) or use LLMs to directly summarize alerts without checking actual metrics or logs (leading to hallucinations). OpenSRE implements a strict, evidence-first invariant: Evidence → Correlation → Timeline → Graph → Hypothesis → Ranking → Explanation.
+To scale OpenSRE from a single-machine CLI tool (v1.0 MVP) to a production-grade enterprise platform, milestone v1.1 introduces persistent graph storage (Neo4j), real-time alerts (Slack & PagerDuty), historical incident learning (Memory), human-approved remediation, and a visual dashboard UI.
 
-To build OpenSRE as a production-grade open-source system, the architecture must support pluggability (for LLMs and Graph models), asynchronicity (non-blocking workers for querying external systems), and strict reproducibility (snapshots containing pipelines, ranking states, and model parameters).
-
-Key risks include rate limiting or failure of external LLM APIs, scaling graph topologies in memory, and leakage of sensitive production credentials. These will be mitigated through a robust `LLMProvider` fallback router, abstracting the `GraphProvider` (facilitating easy Neo4j migration later), and writing a strict redaction layer during evidence normalization.
+The recommended approach enforces our core Evidence-based invariant while adding safe notifications and persistent graph queries. The primary risk is database coupling and unauthenticated action approval webhooks, which we mitigate through interface decoupling and HMAC signature verification.
 
 ## Key Findings
 
 ### Recommended Stack
 
-A Python 3.12 stack with FastAPI, Redis, and Celery provides the perfect balance of execution speed, dependency isolation, and background processing capability.
+We recommend official, modern, and thread-safe Python SDKs for Neo4j, Slack, and PagerDuty, along with a lightweight in-memory/SQLite approach for vector search to avoid deployment bloat.
 
 **Core technologies:**
-- **Python 3.12 & FastAPI**: Core backend framework providing async endpoints and strong typing.
-- **Redis & Celery**: Handles asynchronous, non-blocking execution of the investigation pipeline.
-- **NetworkX**: In-memory graph library for modeling infrastructure topology and root cause analysis.
-- **Pydantic v2**: Strict model validations for snapshots and reports.
+- `neo4j` (v5.x+): Persists dependency graphs and allows running graph algorithms — replacing deprecated `neo4j-driver`.
+- `slack-sdk` (v3.42.0+): Real-time alerts and interactive approvals via Block Kit — replacing deprecated `slackclient`.
+- `pagerduty` (v1.0.0+): Bidirectional incident acknowledgement and sync — replacing deprecated `pdpyras`.
+- SQLite BLOB + Cosine Similarity: Stores and searches historical incident embeddings with zero external infrastructure footprint.
+- React + Vite + Vanilla CSS: Builds a premium, high-performance visual dashboard.
 
 ### Expected Features
 
 **Must have (table stakes):**
-- **LLMProvider router**: Standarized interface supporting OpenAI, Anthropic, Gemini, Ollama, and OpenRouter.
-- **Immutable Event Store**: Raw data storage for evidence collected during investigations.
-- **Asynchronous Worker Queue**: Non-blocking enqueuing of runs returning Job IDs.
-- **Investigation Snapshot & Audit Trail**: Full recording of actions and inputs.
+- Slack/PagerDuty alerts triggered on investigation start/finish.
+- Graph persistence into a Neo4j database.
+- Vector similarity search against historical incident reports.
+- UI listing investigations with interactive timelines.
 
-**Should have (differentiators):**
-- **Evidence Invariant Enforcement**: Refusal to output RCAs without linking to raw logs or metrics.
-- **Explainable Confidence Factors**: Temporal alignment, evidence strength, source reliability, history similarity.
-- **Multi-persona Explainer**: Role-based explanation generation (`sre`, `developer`, `executive`, `customer_support`).
+**Should have (competitive):**
+- Slack Thread updates representing active pipeline stage transitions.
+- Interactive block approvals to execute remediation scripts.
+- PageRank and centrality analysis on Neo4j topology.
+- Visual blast-radius D3 visualization in the dashboard.
 
 **Defer (v2+):**
-- **Neo4j Production Engine**: Persisted visual graph backend.
-- **Real-time Streaming UI**: Web dashboard.
-- **Auto-remediation execution**: Automated command running on clusters.
+- Multi-region Neo4j clustering.
+- Automated remediation execution without any human-in-the-loop validation.
 
 ### Architecture Approach
 
-The application follows a clean architecture pattern: API Layer → Application Services → Domain Layer → Providers/Integrations → Storage.
+The architecture extends the pipeline with decoupled provider interfaces and safe approval middleware.
 
 **Major components:**
-1. **API & CLI Layer**: Triggers investigations and queries reports.
-2. **InvestigationPipeline**: Background task coordinator executing collection, normalization, correlation, timeline sorting, graph modeling, hypothesis generation, ranking, and report writing.
-3. **LLMProvider & GraphProvider Abstractions**: Decouple core domain logic from specific LLM models and graph databases.
+1. `Neo4jProvider`: Graph persistence database adapter.
+2. `NotificationRouter`: Dispatches alerts to Slack Bot client and PagerDuty REST client.
+3. `IncidentMemoryEngine`: Manages sqlite vector storage and similarity searches.
+4. `RemediationOrchestrator`: Asynchronous Celery approval runner.
+5. FastAPI Webhook Middleware: Validates Slack webhook signatures.
 
 ### Critical Pitfalls
 
-1. **Alert-to-LLM-to-Guess**: Bypassed evidence constraints lead to unreliable RCA reports. Avoided by strictly validating that all findings cite Event Store entries.
-2. **Blocking API Handlers**: Long Prometheus/Loki queries block API threads. Avoided by delegating runs to Celery workers.
-3. **Integration Coupling**: Hardcoding specific tools makes codebase fragile. Avoided by enforcing plugin SDK interfaces.
+1. **Hard coupling to Neo4j** — Avoid by wrapping Neo4j operations in try-except and falling back gracefully to NetworkX.
+2. **Unauthenticated Approve Actions** — Avoid by strictly verifying HMAC SHA256 signatures for incoming Slack webhook web requests.
+3. **Infinite Remediation Loops** — Avoid by adding a resource-level execution cooldown (e.g. 1 hour).
+4. **Graph visualization lag** — Avoid by filtering dashboard graph rendering to 3 hops maximum from the root cause node.
 
 ## Implications for Roadmap
 
-The project will follow a 4-phase (Sprint-based) structure to build the core foundation before adding external integrations and advanced reasoning capabilities.
+Based on research, suggested phase structure:
 
-### Phase 1: Foundation (Sprint 1)
-**Rationale:** Standardize routers, event schemas, workers, and testing infrastructure first to establish a solid platform core.
-**Delivers:** LLMProvider, Event Store, Feature Flags, Audit Trail, InvestigationPipeline registry, Snapshots, IncidentReportV1 schema, Redis/Celery queue setup, Docker config, GitLab CI/GitHub Actions workflows, and pytest framework.
-**Addresses:** Basic pipeline execution, multi-LLM routing, and async task processing.
-**Avoids:** Blocking API Handlers.
+### Phase 5: Neo4j Storage Layer
+**Rationale:** Establishing persistent graph storage is a core backend dependency for query APIs and UI visualization.
+**Delivers:** `Neo4jProvider` integration, node/edge sync, fallback handlers.
+**Addresses:** `NEO4-01`
+**Avoids:** Hard coupling to Neo4j.
 
-### Phase 2: Integrations (Sprint 2)
-**Rationale:** Add primary data collection targets once the pipeline execution engine is stable.
-**Delivers:** Prometheus, Loki, Kubernetes, and GitHub connectors.
-**Uses:** HTTPX and Kubernetes client packages.
-**Implements:** The collection stage of the pipeline.
+### Phase 6: Slack & PagerDuty Notifications
+**Rationale:** Connects pipeline state updates to standard alerting systems, enabling immediate user visibility.
+**Delivers:** Slack WebClient, Block Kit message builders, PagerDuty Client, and webhook signature verification middleware.
+**Addresses:** `NOTF-01`, `NOTF-02`
+**Avoids:** Unauthenticated approval actions.
 
-### Phase 3: Timeline & Correlation (Sprint 3)
-**Rationale:** Organize raw data chronologically and identify logical relationships.
-**Delivers:** TimelineBuilder (deterministic event sequencing) and Evidence Correlation engine.
-**Addresses:** Normalization and correlation pipeline stages.
+### Phase 7: Historical Incident Memory
+**Rationale:** Incident similarities must be computed and indexed before the remediation orchestrator can suggest past successful actions.
+**Delivers:** SQLite vector storage, cosine similarity search inside `RootCauseRanker`.
+**Addresses:** `MEM-01`
+**Avoids:** Memory similarity drift.
 
-### Phase 4: Graph Engine & Root Cause Ranking (Sprint 4)
-**Rationale:** Layer the NetworkX graph reasoning and multi-factor ranking algorithms on top of the sorted timeline.
-**Delivers:** GraphProvider (NetworkX implementation), RootCauseRanker, and Synthetic Incident Testing suite.
-**Avoids:** Un-Evidenced LLM RCA.
+### Phase 8: Human-in-the-Loop Remediation
+**Rationale:** Integrates safety boundaries and Celery worker executions once notification webhooks and memory indexes exist.
+**Delivers:** `RemediationOrchestrator`, approval status state machine, cooldown gates, and automated post-check triggers.
+**Addresses:** `REMED-01`
+**Avoids:** Infinite remediation loops.
+
+### Phase 9: Web Dashboard UI
+**Rationale:** Visualizes timelines, graph blast radiuses, and remediation status screens implemented in all prior backend phases.
+**Delivers:** Vite React SPA with timeline, D3 graph layout, and pipeline state viewer.
+**Addresses:** `UI-01`
+**Avoids:** Graph visualization browser lag.
 
 ### Phase Ordering Rationale
 
-- Pipeline logic is built in Phase 1 using mock/stub data sources before connecting to actual live APIs in Phase 2.
-- Data sorting (Phase 3) must happen before Graph reasoning (Phase 4) because temporal relationships serve as inputs to topological root cause scoring.
+- Graph and notification layers come first to establish persistent telemetry and alerting channels.
+- Memory index runs next to build the historical database before the remediation service starts query-matching.
+- Remediation runs fourth, utilizing the Slack interactive blocks and Memory engine suggestions.
+- UI runs last as it aggregates all backend capabilities into a cohesive, premium visualization interface.
 
 ### Research Flags
 
 Phases likely needing deeper research during planning:
-- **Phase 2 (Integrations):** Authenticating and securely retrieving logs/events across differing Kubernetes/Loki network setups requires API research.
-- **Phase 4 (Graph Engine):** Topology modeling for NetworkX requires designing clear node/edge properties that map logical server dependencies.
+- **Phase 8 (Remediation):** Verification of shell environments and container execution sandbox safety.
+- **Phase 9 (UI):** D3 force layout rendering tuning to prevent high browser CPU overhead.
 
 Phases with standard patterns (skip research-phase):
-- **Phase 1 (Foundation):** Standard FastAPI and Celery configurations.
+- **Phase 5 (Neo4j):** Official `neo4j` Python driver has standardized connection pooling patterns.
+- **Phase 6 (Notifications):** Slack SDK and PagerDuty SDK have extremely well-documented client protocols.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Python, FastAPI, and Celery are mature and standard. |
-| Features | HIGH | Requirements are explicitly defined in the OpenSRE specification. |
-| Architecture | HIGH | Clean architecture patterns map cleanly to Python packages. |
-| Pitfalls | HIGH | Standard SRE/AI pitfalls are well documented. |
+| Stack | HIGH | Validated modern libraries and verified deprecations. |
+| Features | HIGH | Table stakes and competitive requirements mapped. |
+| Architecture | HIGH | Visual dataflow and integration hooks identified. |
+| Pitfalls | HIGH | Specific mitigations designed for security and safety. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **LLM Token Rate Limits:** Concurrent agent calls might trigger rate limits on public LLM endpoints. Resolved by building fallback routing and backoffs in LLMProvider.
+- **Slack Block Kit Sandbox**: Testing Slack webhooks locally requires an ngrok tunnel or equivalent forwarding mechanism.
+- **Mock PagerDuty Endpoint**: Standard unit testing requires a mock client for PagerDuty REST API routes.
 
 ## Sources
 
-- OpenSRE specification prompt.
-- FastAPI, Celery, and NetworkX documentation.
+### Primary (HIGH confidence)
+- `neo4j` PyPI: Neo4j official Python package references.
+- `slack-sdk` Docs: Slack python integration guide and request signing.
+- `pagerduty` PyPI: Official PagerDuty Python client details.
 
 ---
 *Research completed: 2026-06-07*

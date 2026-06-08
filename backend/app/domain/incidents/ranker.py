@@ -6,8 +6,9 @@ from backend.app.domain.incidents.graph import GraphProvider
 logger = logging.getLogger(__name__)
 
 class RootCauseRanker:
-    def __init__(self, graph_provider: GraphProvider = None):
+    def __init__(self, graph_provider: GraphProvider = None, memory_engine = None):
         self.graph_provider = graph_provider or GraphProvider()
+        self.memory_engine = memory_engine
 
     def _parse_iso(self, ts_str: str) -> datetime:
         cleaned = ts_str.replace("Z", "+00:00")
@@ -67,6 +68,30 @@ class RootCauseRanker:
             has_commit = any(e.get("event_type") == "git_commit" for e in events)
             change_history = 1.0 if has_commit else 0.0
 
+            # Query memory engine for historical incidents similarity
+            similar_incidents_list = []
+            historical_remediation = None
+            if self.memory_engine:
+                try:
+                    from backend.app.domain.incidents.memory import extract_features_from_report
+                    act_keys, act_alerts, act_tokens = extract_features_from_report({
+                        "blast_radius": keys,
+                        "timeline": events
+                    })
+                    similar = self.memory_engine.find_similar_incidents(
+                        active_keys=act_keys,
+                        active_alerts=act_alerts,
+                        active_tokens=act_tokens,
+                        threshold=0.2
+                    )
+                    if similar:
+                        # Set change_history metric to best match similarity score
+                        change_history = similar[0]["similarity"]
+                        historical_remediation = similar[0].get("remediation_action")
+                        similar_incidents_list = [s["investigation_id"] for s in similar]
+                except Exception as me_err:
+                    logger.warning(f"Error querying memory engine in ranker: {me_err}")
+
             # Compute weighted confidence score
             confidence = (0.25 * temporal_score + 
                           0.25 * evidence_density + 
@@ -96,7 +121,9 @@ class RootCauseRanker:
                     "evidence_density": evidence_density,
                     "source_reliability": source_reliability,
                     "change_history": change_history
-                }
+                },
+                "similar_incidents": similar_incidents_list,
+                "remediation": historical_remediation
             })
 
         candidates.sort(key=lambda x: x["confidence_score"], reverse=True)

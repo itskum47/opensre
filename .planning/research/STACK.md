@@ -1,97 +1,42 @@
-# Stack Research
+# Research: Stack Additions
 
-**Domain:** AI-driven SRE & Incident Investigation Platform
-**Researched:** 2026-06-07
-**Confidence:** HIGH
+This document details the stack additions required to implement the target features for milestone v1.1 (Slack/PagerDuty notifications, Neo4j graph storage, historical memory RCA, and a dashboard UI).
 
-## Recommended Stack
+## Recommended Additions
 
-### Core Technologies
+### Slack Notifications
+* **Package**: `slack-sdk`
+* **Version**: `3.42.0+`
+* **Purpose**: Send real-time investigation alerts, timeline updates, and interactive block kit messages for incident routing.
+* **Integration**: Python Slack WebClient configured with `SLACK_BOT_TOKEN`.
 
-| Technology | Version | Purpose | Why Recommended |
-|------------|---------|---------|-----------------|
-| Python | 3.12 | Core Programming Language | Strong ecosystem for data structures, AI/LLM libraries, graph reasoning, and backend services. |
-| FastAPI | 0.111.0 | Backend REST API Framework | Extremely fast, typed (Pydantic), async-first, automatically generates OpenAPI schema, well-suited for high-throughput API endpoints. |
-| Redis | 7.2 | Message Broker & Cache | Used for task queueing (with Celery/RQ) and temporary execution states. |
-| Celery | 5.4.0 | Asynchronous Worker Queue | Handles execution of the non-blocking `InvestigationPipeline` stages. |
-| NetworkX | 3.3 | In-Memory Graph Engine | Python library for graph modeling of infrastructure and services; perfect for local in-memory root cause graph analysis. |
-| Pydantic | 2.7.0 | Data Validation and Serialization | Enforces strict schema validations for `IncidentReportV1`, snapshots, and configuration models. |
+### PagerDuty Status Sync
+* **Package**: `pagerduty`
+* **Version**: `1.0.0+` (modern, thread-safe PagerDuty SDK replacing deprecated `pdpyras`)
+* **Purpose**: Automatically trigger, acknowledge, and synchronize status transitions of PagerDuty incidents from OpenSRE pipeline.
+* **Integration**: API Client configured with `PAGERDUTY_API_KEY`.
 
-### Supporting Libraries
+### Neo4j Persistent Graph Store
+* **Package**: `neo4j`
+* **Version**: `5.x+` (uses official driver)
+* **Purpose**: Persist dependency graphs, trace root causes, and run graph algorithms (like PageRank or Shortest Path) across investigations.
+* **Integration**: `Neo4jProvider` implementing `GraphProvider` interface.
 
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| SQLAlchemy | 2.0.30 | Database ORM | Interface with PostgreSQL/SQLite for keeping track of investigations and audit logs. |
-| google-genai | 0.1.1 | Google Gemini SDK | Connecting to Gemini models through `LLMProvider`. |
-| anthropic | 0.28.0 | Anthropic Claude SDK | Connecting to Anthropic models through `LLMProvider`. |
-| openai | 1.30.0 | OpenAI / OpenRouter SDK | Connecting to OpenAI and OpenRouter endpoints through `LLMProvider`. |
-| httpx | 0.27.0 | Async HTTP Client | Performing API queries against Prometheus, Loki, GitHub, and Kubernetes APIs. |
-| kubernetes | 30.1.0 | Kubernetes Client | Querying K8s state and events for evidence. |
+### Historical Memory RCA
+* **Method**: In-Memory / SQLite BLOB Vector Storage + Cosine Similarity
+* **Package**: Pure Python standard library (`math`) + standard SQLite BLOB storage (optionally `numpy` if already available).
+* **Rationale**: Keep dependencies minimal. An in-memory or SQLite BLOB storage with a pure Python cosine similarity utility is lightweight, robust, fast enough for thousands of historical incidents, and does not require complex vector database deployment (like Pinecone/ChromaDB).
 
-### Development Tools
-
-| Tool | Purpose | Notes |
-|------|---------|-------|
-| Docker | Containerization | Builds unified local run environment for API, workers, Redis, and integrations. |
-| pytest | Test Harness | Handles unit testing, integration tests, and benchmarks suite. |
-| Ruff | Linter & Formatter | Enforces clean Python style and speed. |
-| Poetry / pip-tools | Dependency Management | Safe, deterministic lockfiles. |
-
-## Installation
-
-```bash
-# Core Dependencies
-pip install fastapi[all] celery redis networkx pydantic sqlalchemy psycopg2-binary httpx
-
-# LLM Providers
-pip install google-genai anthropic openai
-
-# Integration Clients
-pip install kubernetes
-
-# Dev Dependencies
-pip install pytest pytest-asyncio pytest-cov ruff black
-```
-
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| NetworkX | Neo4j | When graph size exceeds RAM or when persistent visual graph querying is required. GraphProvider abstraction allows this swap. |
-| Celery | RQ (Redis Queue) | If Celery configuration overhead is too high. Celery is chosen here for robust multi-worker features and broker support. |
-| FastAPI | Django Ninja | If django admin is required out of the box. FastAPI is chosen for raw performance and simpler architecture. |
-
-## What NOT to Use
-
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| LangChain / LlamaIndex | Too much abstraction magic, difficult to debug, hard to customize for strict evidence logic. | Custom lightweight `LLMProvider` abstraction. |
-| Direct HTTP calls to LLMs | Violates decoupling rules, makes mocking tests difficult. | Unified `LLMProvider` interface. |
-| Synchronous Worker Execution | Blocking long-running investigation steps in API threads degrades throughput. | Celery / RQ background worker task queue. |
-
-## Stack Patterns by Variant
-
-**If Local / Open Source CLI mode:**
-- Use SQLite for databases to avoid database infra overhead.
-- Because it is lightweight and self-contained.
-
-**If Production / Cloud Deploy:**
-- Use PostgreSQL and Neo4j.
-- Because persistent storage, concurrency, and scalable graph querying are needed.
-
-## Version Compatibility
-
-| Package A | Compatible With | Notes |
-|-----------|-----------------|-------|
-| Pydantic v2 | FastAPI v0.110+ | Requires updating Pydantic models to V2 definitions. |
-| Celery v5 | Redis v7 | Standard broker integration. |
-
-## Sources
-
-- FastAPI Official Documentation — Async patterns.
-- Celery Task Queue Documentation — Asynchronous runner patterns.
-- NetworkX Network Analysis in Python — Benchmarks and usage limits.
+### Dashboard UI
+* **Stack**: Vite + React + TypeScript + Vanilla CSS
+* **Purpose**: Web-based dashboard for starting investigations, viewing real-time pipeline status, interactive timelines, and dependency graph visualization.
+* **Integration**: Communicates with the FastAPI backend over REST APIs and WebSockets.
 
 ---
-*Stack research for: OpenSRE*
-*Researched: 2026-06-07*
+
+## What NOT to Add
+
+* **`slackclient`**: Deprecated; replaced by `slack-sdk`.
+* **`pdpyras`**: Deprecated; replaced by official `pagerduty` library.
+* **`neo4j-driver`**: Deprecated; use `neo4j` package.
+* **Heavy Vector Databases (ChromaDB / Milvus / Pinecone)**: Overkill for incident memory storage. A lightweight SQLite-based or in-memory vector storage keeps the platform self-contained and easy to deploy.

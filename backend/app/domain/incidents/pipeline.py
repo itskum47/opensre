@@ -337,7 +337,9 @@ class InvestigationPipeline:
         except Exception:
             graph_provider = GraphProvider(investigation_id=investigation_id)
 
-        ranker = RootCauseRanker(graph_provider)
+        from backend.app.domain.incidents.memory import IncidentMemoryEngine
+        memory_engine = IncidentMemoryEngine(self.db)
+        ranker = RootCauseRanker(graph_provider, memory_engine=memory_engine)
         candidates = ranker.rank_hypotheses(started_at, groups)
 
         hypotheses_path = os.path.join(store.base_dir, investigation_id, "hypotheses.json")
@@ -400,6 +402,12 @@ class InvestigationPipeline:
         # Blast radius (affected systems)
         blast_radius = top_hyp.get("keys", [])
 
+        # Retrieve suggested remediation and similar incidents
+        remediation = top_hyp.get("remediation")
+        if not remediation:
+            remediation = {"action": "Rollback deployment or restart affected pods"}
+        similar_incidents = top_hyp.get("similar_incidents") or []
+
         # Build IncidentReportV1
         report_payload = IncidentReportV1(
             summary=f"Automated incident investigation {investigation_id} completed.",
@@ -409,7 +417,8 @@ class InvestigationPipeline:
             timeline=raw_timeline,
             evidence=evidence_sources,
             blast_radius=blast_radius,
-            remediation={"action": "Rollback deployment or restart affected pods"},
+            remediation=remediation,
+            similar_incidents=similar_incidents,
             metadata={"pipeline_version": self.pipeline_version}
         )
 
@@ -423,6 +432,75 @@ class InvestigationPipeline:
         if investigation:
             investigation.report_id = f"report_{investigation_id}"
             self.db.commit()
+
+        # Create database RemediationAction record if one is recommended in the report
+        try:
+            from backend.app.domain.incidents.models import RemediationAction, RemediationStatus
+            action_name = remediation.get("action", "restart")
+            if "rollback" in action_name.lower():
+                action_name = "rollback"
+            elif "restart" in action_name.lower():
+                action_name = "restart"
+            else:
+                action_name = "restart"
+            
+            target_resource = remediation.get("resource")
+            if not target_resource:
+                target_resource = blast_radius[0] if blast_radius else "auth-service"
+                
+            params_dict = remediation.get("params") or {}
+            remed_id = f"remed_{investigation_id}"
+            
+            existing_remed = self.db.query(RemediationAction).filter(RemediationAction.investigation_id == investigation_id).first()
+            if not existing_remed:
+                db_remed = RemediationAction(
+                    id=remed_id,
+                    investigation_id=investigation_id,
+                    status=RemediationStatus.PENDING_APPROVAL,
+                    action_name=action_name,
+                    target_resource=target_resource,
+                    params=json.dumps(params_dict)
+                )
+                self.db.add(db_remed)
+                self.db.commit()
+                logger.info(f"Pipeline {investigation_id}: Created database RemediationAction {remed_id}")
+        except Exception as ra_err:
+            logger.error(f"Failed to create database RemediationAction: {ra_err}", exc_info=True)
+
+        # Write unified snapshot
+        try:
+            from backend.app.domain.incidents.snapshots import SnapshotManager
+            snapshot_manager = SnapshotManager()
+            
+            # Load topology
+            topology_path = os.path.join(store.base_dir, investigation_id, "topology.json")
+            try:
+                with open(topology_path, "r", encoding="utf-8") as f:
+                    topology_data = json.load(f)
+            except Exception:
+                topology_data = {}
+
+            snapshot_manager.write_snapshot(
+                investigation_id=investigation_id,
+                raw_events=store.get_events(investigation_id),
+                timeline=raw_timeline,
+                graph=topology_data,
+                findings=hypotheses,
+                report=json.loads(report_payload.model_dump_json()),
+                metadata={"pipeline_version": self.pipeline_version}
+            )
+            logger.info(f"Pipeline {investigation_id}: snapshot persisted successfully")
+        except Exception as snap_err:
+            logger.error(f"Failed to write snapshot: {snap_err}", exc_info=True)
+
+        # Index completed incident in database memory
+        try:
+            from backend.app.domain.incidents.memory import IncidentMemoryEngine
+            memory_engine = IncidentMemoryEngine(self.db)
+            report_dict = json.loads(report_payload.model_dump_json())
+            memory_engine.index_incident(investigation_id, report_dict)
+        except Exception as me_err:
+            logger.error(f"Failed to index completed incident report: {me_err}", exc_info=True)
             
         logger.info(f"Pipeline {investigation_id}: report persisted successfully")
 
