@@ -146,7 +146,7 @@ Thumbs.db
 *.db
 *.db-journal
 backend/app/snapshots/
-backend/app/events/
+backend/data/events/
 
 # Node.js
 node_modules/
