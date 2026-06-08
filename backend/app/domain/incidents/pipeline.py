@@ -13,6 +13,7 @@ from backend.app.providers.github import GitHubDataSource
 from backend.app.domain.incidents.timeline import TimelineBuilder, CorrelationEngine
 from backend.app.domain.incidents.graph import GraphProvider
 from backend.app.domain.incidents.ranker import RootCauseRanker
+from backend.app.providers.notifications.router import NotificationRouter
 
 
 
@@ -23,6 +24,7 @@ class InvestigationPipeline:
     def __init__(self, db: Session, pipeline_version: str = "1.0"):
         self.db = db
         self.pipeline_version = pipeline_version
+        self.notifier = NotificationRouter()
 
     def _update_status(self, investigation_id: str, status: InvestigationStatus):
         investigation = self.db.query(Investigation).filter(Investigation.id == investigation_id).first()
@@ -41,12 +43,33 @@ class InvestigationPipeline:
         self.db.add(audit)
         self.db.commit()
         logger.info(f"Investigation {investigation_id} transitioned from {old_status} to {status}")
+        
+        # Dispatch status transition alert
+        try:
+            self.notifier.dispatch("stage_transition", {
+                "investigation_id": investigation_id,
+                "status": status.value,
+                "details": f"Pipeline entered stage: {status.value}"
+            })
+        except Exception as e:
+            logger.warning(f"Failed to dispatch transition alert for {investigation_id}: {e}")
 
-    async def execute(self, investigation_id: str):
+    async def execute(self, investigation_id: str, pagerduty_incident_id: str = None):
         """Executes the full pipeline stages sequentially."""
         try:
             start_time = datetime.now(timezone.utc)
             
+            # Dispatch pipeline started alert
+            try:
+                self.notifier.dispatch("investigation_started", {
+                    "investigation_id": investigation_id,
+                    "status": "STARTED",
+                    "details": "Pipeline has initiated evidence collection and analysis.",
+                    "pagerduty_incident_id": pagerduty_incident_id
+                })
+            except Exception as e:
+                logger.warning(f"Failed to dispatch started alert for {investigation_id}: {e}")
+
             # 1. Collect
             self._update_status(investigation_id, InvestigationStatus.COLLECTING)
             await self.collect(investigation_id)
@@ -93,6 +116,28 @@ class InvestigationPipeline:
             self.db.add(audit)
             self.db.commit()
             
+            # Load completed findings from report
+            store = EventStore()
+            report_path = os.path.join(store.base_dir, investigation_id, "report.json")
+            details = "Investigation completed with findings."
+            try:
+                with open(report_path, "r", encoding="utf-8") as f:
+                      rep = json.load(f)
+                      details = f"Suspected root cause: {rep.get('root_cause', 'Unknown')}. Confidence: {rep.get('confidence', 0.0):.1f}%."
+            except Exception:
+                pass
+                
+            # Dispatch pipeline completed alert
+            try:
+                self.notifier.dispatch("investigation_completed", {
+                    "investigation_id": investigation_id,
+                    "status": "COMPLETED",
+                    "details": details,
+                    "pagerduty_incident_id": pagerduty_incident_id
+                })
+            except Exception as e:
+                logger.warning(f"Failed to dispatch completed alert for {investigation_id}: {e}")
+
         except Exception as e:
             logger.error(f"Investigation {investigation_id} failed: {e}", exc_info=True)
             investigation = self.db.query(Investigation).filter(Investigation.id == investigation_id).first()
@@ -107,6 +152,13 @@ class InvestigationPipeline:
             )
             self.db.add(audit)
             self.db.commit()
+            
+            # Dispatch failure notification to Slack
+            try:
+                self.notifier.slack.send_alert(f"❌ *OpenSRE Pipeline Failed:* Investigation {investigation_id} crashed: {e}")
+            except Exception:
+                pass
+                
             raise e
 
     async def collect(self, investigation_id: str):
